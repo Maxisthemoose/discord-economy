@@ -1,0 +1,29 @@
+{
+  "name": "discord-economy",
+  "version": "1.0.0",
+  "description": "A full economy system in your own Discord.js bot!",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Maxisthemoose/discord-economy.git"
+  },
+  "keywords": [
+    "economy",
+    "discord",
+    "discord.js",
+    "discordjs",
+    "discordjs-economy",
+    "money",
+    "discordjs-money",
+    "currency"
+  ],
+  "author": "Maxisthemoose",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Maxisthemoose/discord-economy/issues"
+  },
+  "homepage": "https://github.com/Maxisthemoose/discord-economy#readme"
+}
