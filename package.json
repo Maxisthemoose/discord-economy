@@ -1,10 +1,10 @@
 {
-  "name": "discord-economy",
+  "name": "discord-experience",
   "version": "1.0.0",
-  "description": "A full economy system in your own Discord.js bot!",
+  "description": "A full experience system in your own Discord.js bot!",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p ."
   },
   "repository": {
     "type": "git",
@@ -25,5 +25,14 @@
   "bugs": {
     "url": "https://github.com/Maxisthemoose/discord-economy/issues"
   },
-  "homepage": "https://github.com/Maxisthemoose/discord-economy#readme"
+  "homepage": "https://github.com/Maxisthemoose/discord-economy#readme",
+  "dependencies": {
+    "canvas": "^2.6.1",
+    "discord.js": "^12.3.1",
+    "mongoose": "^5.10.9"
+  },
+  "devDependencies": {
+    "@types/mongoose": "^5.7.36",
+    "@types/node": "^14.11.10"
+  }
 }
