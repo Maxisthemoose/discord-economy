@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Maxisthemoose/discord-economy.git"
+    "url": "git+https://github.com/Maxisthemoose/discord-experience.git"
   },
   "keywords": [
     "economy",
@@ -23,9 +23,9 @@
   "author": "Maxisthemoose",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/Maxisthemoose/discord-economy/issues"
+    "url": "https://github.com/Maxisthemoose/discord-experience/issues"
   },
-  "homepage": "https://github.com/Maxisthemoose/discord-economy#readme",
+  "homepage": "https://github.com/Maxisthemoose/discord-experience#readme",
   "dependencies": {
     "canvas": "^2.6.1",
     "discord.js": "^12.3.1",
