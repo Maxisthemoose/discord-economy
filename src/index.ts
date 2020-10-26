@@ -352,11 +352,13 @@ export class Experience {
 
         let update: {} = {};
 
+        let skipped = false;
+
         for (let i = 0; i < Questions.length; i++) {
             const q = Questions[i];
 
             const embed = new MessageEmbed()
-                .setDescription(`${Questions[i - 1] ? `${Questions[i - 1].setting} successfully set to ${update[Questions[i - 1].setting]}` : ""}\n\n${q.question}\n\nType \`cancel\` at any point to cancel.`)
+                .setDescription(`${Questions[i - 1] && !skipped ? `${Questions[i - 1].setting} successfully set to ${update[Questions[i - 1].setting]}` : ""}${skipped ? `Successfully skipped setting ${Questions[i - 1].setting}` : ""}\n\n${q.question}\n\nType \`none\` or \`skip\` to skip this setting\nType \`cancel\` at any point to cancel.`)
                 .setColor("RED");
             if (!msg) msg = await message.channel.send("", { embed });
             else msg = await msg.edit("", { embed });
@@ -373,6 +375,8 @@ export class Experience {
                     .setColor("RED");
                 await msg.edit("", { embed: Cancelled });
                 break;
+            } else if (m && m.content.toLowerCase() === "none" || m && m.content.toLowerCase() === "skip") {
+                skipped = true;
             } else {
                 
                 switch (q.answerType) {
@@ -448,7 +452,7 @@ export class Experience {
 
                     break;
                 }
-
+                skipped = false;
             }
         }
         console.log(update);
