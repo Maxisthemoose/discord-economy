@@ -27,9 +27,11 @@
   },
   "homepage": "https://github.com/Maxisthemoose/discord-experience#readme",
   "dependencies": {
+    "@types/ms": "^0.7.31",
     "canvas": "^2.6.1",
     "discord.js": "^12.3.1",
-    "mongoose": "^5.10.9"
+    "mongoose": "^5.10.9",
+    "ms": "^2.1.2"
   },
   "devDependencies": {
     "@types/mongoose": "^5.7.36",

@@ -1,5 +1,7 @@
 import Canvas from "canvas";
-import { Collection, GuildMember, Message, MessageEmbed, Snowflake, TextChannel } from "discord.js";
+import ms from "ms";
+import { Collection, Message, MessageEmbed, Snowflake, TextChannel } from "discord.js";
+import { inspect } from "util";
 import { connect } from "mongoose";
 import Guild from "./database/Guild";
 import User from "./database/User";
@@ -7,42 +9,50 @@ import { roundRect } from "./util/Functions/roundRect";
 import { canvasUsername } from "./util/Functions/canvasUsername"
 import Rank from "./util/Interfaces/Rank.interface";
 import questions from "./util/Interfaces/Questions.interface";
+import GuildInterface from "./database/interfaces/Guild.interface";
 
 export class Experience {
     #initialized = false;        /** Guild ID */        /** User ID */
     #userCollection = new Collection<Snowflake, Collection<Snowflake, number>>();
+    #guildsCollection = new Collection<Snowflake, GuildInterface>();
     constructor( 
-        /**
-         * The Mongoose URI to connect discord-experience to your Mongoose database.
-         */
-        public mongoURI: string,
-        /**
-         * Whether or not to console log actions.
-         */
-        public verbose: boolean,
-        /**
-         * An option path to your custom User Schema. This must follow a base structure or it will throw an error.
-         */
-        // public schemaPath?: string,
+        public options: { mongoURI: string, verbose: boolean } = {
+            /**
+             * The Mongoose URI to connect discord-experience to your Mongoose database.
+             */
+            mongoURI: "",
+            /**
+             * Whether or not to console log actions.
+             */
+            verbose: false,
+        }
     ) { };
 
     public init() {
-        // const CustomSchema = require(this.schemaPath);
 
-        connect(this.mongoURI, { useUnifiedTopology: true, useNewUrlParser: true },  (err) => {
+        connect(this.options.mongoURI, { useUnifiedTopology: true, useNewUrlParser: true },  (err) => {
             if (err) throw err;
-            else console.log("Successfully connected discord-experience to the Mongoose Database.");
+            else this.options.verbose ? console.log("Successfully connected discord-experience to the Mongoose Database.") : "";
             this.#initialized = true;
+        }).then(async (m) => {
+            const Guilds = await Guild.find();
+            for (const g of Guilds) {
+                this.#guildsCollection.set(g.guildID, g);
+            }
         });
     }
 
     public async addXP(message: Message) {
         if (!this.#initialized) throw new Error("Please initialize discord-experience before trying to use any methods. To do so, call the init() method first thing in your top level folder.");
 
-        let guild = await Guild.findOne({ guildID: message.guild.id });
-        if (!guild) guild = await Guild.create({
-            guildID: message.guild.id
-        });
+        // let guild = await Guild.findOne({ guildID: message.guild.id });
+        let guild = this.#guildsCollection.get(message.guild.id);
+        if (!guild) {
+            guild = await Guild.create({
+                guildID: message.guild.id
+            });
+            this.#guildsCollection.set(message.guild.id, guild);
+        }
 
         if (guild.ignoredChannels.includes(message.channel.id)) return;
         if (guild.ignoredUsers.includes(message.author.id)) return;
@@ -81,13 +91,16 @@ export class Experience {
     }
 
     public async getUserData (message: Message) {
-
+        if (!this.#initialized) throw new Error("Please initialize discord-experience before trying to use any methods. To do so, call the init() method first thing in your top level folder.");
         const userMention = message.mentions.users.first() || message.author;
 
-        let guild = await Guild.findOne({ guildID: message.guild.id });
-        if (!guild) guild = await Guild.create({
-            guildID: message.guild.id,
-        });
+        let guild = this.#guildsCollection.get(message.guild.id);
+        if (!guild) {
+            guild = await Guild.create({
+                guildID: message.guild.id
+            });
+            this.#guildsCollection.set(message.guild.id, guild);
+        }
 
         let user = await User.findOne({ userId: userMention.id });
         if (!user) user = await User.create({
@@ -117,13 +130,16 @@ export class Experience {
     }
 
     public async rankCard (message: Message, RankData: Rank) {
-
+        if (!this.#initialized) throw new Error("Please initialize discord-experience before trying to use any methods. To do so, call the init() method first thing in your top level folder.");
         const user = message.mentions.users.first() || message.author;
 
-        let guild = await Guild.findOne({ guildID: message.guild.id });
-        if (!guild) guild = await Guild.create({
-            guildID: message.guild.id,
-        });
+        let guild = this.#guildsCollection.get(message.guild.id);
+        if (!guild) {
+            guild = await Guild.create({
+                guildID: message.guild.id
+            });
+            this.#guildsCollection.set(message.guild.id, guild);
+        }
 
         Canvas.registerFont("./node_modules/discord-experience/src/util/Fonts/Manrope-Regular.ttf", {
             family: "Manrope",
@@ -333,10 +349,15 @@ export class Experience {
     }
 
     public async updateGuildSettings (message: Message) {
-        let guild = await Guild.findOne({ guildID: message.guild.id });
-        if (!guild) guild = await Guild.create({
-            guildID: message.guild.id,
-        });
+        if (!this.#initialized) throw new Error("Please initialize discord-experience before trying to use any methods. To do so, call the init() method first thing in your top level folder.");
+        
+        let guild = this.#guildsCollection.get(message.guild.id);
+        if (!guild) {
+            guild = await Guild.create({
+                guildID: message.guild.id
+            });
+            this.#guildsCollection.set(message.guild.id, guild);
+        }
 
         const Questions: questions[] = [
             { question: "What amount of base XP would you like to require? (This number will be the amount required for level 1, and is the base for the levels to come.) Ex: You choose 500. Level 1: 500xp, Level 2: 1000xp", setting: "baseXP", answerType: "number" },
@@ -378,14 +399,13 @@ export class Experience {
             } else if (m && m.content.toLowerCase() === "none" || m && m.content.toLowerCase() === "skip") {
                 skipped = true;
             } else {
-                
+                const tempArgs = m.content.split(" ");
                 switch (q.answerType) {
                     case "array":
-                        const tempArgs = m.content.split(" ");
-
                         switch(q.setting) {
                             case "ignoredUsers":
                                 let mMentions = message.mentions.members.size > 0 ? message.mentions.members.array().map(m => m.id) : null;
+                                console.log(mMentions);
                                 if (!mMentions) {
 
                                     mMentions = [];
@@ -399,7 +419,6 @@ export class Experience {
                                         } else {
                                             mBad.push(arg);
                                         }
-                                        console.log(message.guild.members.cache.get(arg));
                                     }
                                     if (mBad.length === tempArgs.length) {
                                         message.channel.send("Please input at least one valid ID or mention!").then(m => m.delete({ timeout: 10000 }));
@@ -446,16 +465,45 @@ export class Experience {
                         }
                     break;
                     case "string":
-
+                        const channel = message.mentions.channels.first() || message.guild.channels.cache.get(m.content);
+                        if (!channel) {
+                            message.channel.send("Please mention a valid channel or enter a valid channel ID!");
+                            i--;
+                            break;
+                        }
+                        update[q.setting] = channel.id;
                     break;
                     case "time":
+                        const validStamps = ["H", "M", "S"];
+
+                        const time = tempArgs[0];
+
+                        for (const val of validStamps) {
+                            if (time.toUpperCase().includes(val)) break;
+                        }
+
+                        const MS = ms(time);
+
+                        update[q.setting] = MS;
 
                     break;
                 }
                 skipped = false;
             }
         }
-        console.log(update);
+
+        try {
+            await Guild.findOneAndUpdate({ guildID: message.guild.id }, update);
+        } catch (err) {
+            console.log(err);
+            return message.channel.send("Something went wrong while trying to update your leveling settings. If you are the bot owner, please check your console.")
+        }
+
+        const DoneEm = new MessageEmbed()
+            .setDescription(`Successfully updated leveling settings!\n\`\`\`json\n${inspect(update, false, 3)}\n\`\`\``)
+            .setColor("RED");
+        msg.edit("", { embed: DoneEm });
+       
 
     }
 }
